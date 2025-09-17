@@ -26,7 +26,13 @@ DB_NAME=$DB_NAME
 DB_USER=$DB_USER
 DB_PASSWORD=$DB_PASSWORD
 DB_PORT=5432
+SERVER_ID=${server_id}
 EOF
+
+# For Celery worker, add multiple database URLs
+if [ "${server_role}" = "celery" ]; then
+    echo "DB_URLS=${database_urls}" >> .env
+fi
 
 # Create virtual environment
 python3 -m venv venv

@@ -4,10 +4,10 @@ This project deploys a scalable Django application with Celery task processing o
 
 ## Architecture
 
-- **2 Web Servers**: Running Django with Gunicorn, serving HTTP requests
-- **1 Processing Server**: Running Celery workers for background task processing
-- **PostgreSQL Database**: Managed RDS database shared by all servers
-- **Redis Cluster**: Managed ElastiCache for message brokering
+- **2 Web Servers**: Each running Django with Gunicorn, each with its own dedicated PostgreSQL database
+- **1 Processing Server**: Running Celery workers that can access all databases
+- **2 PostgreSQL Databases**: Each web server has its own managed RDS database
+- **Redis Cluster**: Managed ElastiCache for message brokering with server identification
 - **Secure Network**: VPC with proper security groups
 
 ## Project Structure
@@ -26,10 +26,11 @@ This project deploys a scalable Django application with Celery task processing o
 ## Django Application
 
 The Django app provides:
-- Web form for entering two numbers
-- Celery task that adds the numbers (with 10-second delay to simulate processing)
-- PostgreSQL database for storing Django data (shared by all servers)
-- Redis as message broker between web servers and processing server
+- Web form for entering two numbers (shows which server you're connected to)
+- Celery task that adds the numbers with server identification (10-second delay to simulate processing)
+- Multiple PostgreSQL databases (each web server has its own database)
+- Redis as message broker that includes server ID to route tasks to correct database
+- Database routing logic to ensure Celery workers update the correct server's database
 
 ## Deployment Instructions
 
@@ -93,10 +94,17 @@ The Django app provides:
 ## Security Features
 
 - **Web servers**: Accept HTTP (port 80) from anywhere, SSH from your IP only
-- **Processing server**: SSH access from your IP only
-- **PostgreSQL Database**: Only accessible from web and processing servers (no public access)
+- **Processing server**: SSH access from your IP only, can access all databases
+- **PostgreSQL Databases**: Each database only accessible from servers (no public access)
 - **Redis**: Only accessible from web and processing servers (no public access)
 - **VPC**: Isolated network environment
+
+## Multi-Database Architecture
+
+- **Web Server 1**: Uses `django-postgres-1` database, sends tasks with `server_id=1`
+- **Web Server 2**: Uses `django-postgres-2` database, sends tasks with `server_id=2`
+- **Celery Worker**: Receives tasks with server ID and routes to correct database
+- **Message Flow**: Web Server → Redis (with server_id) → Celery → Correct Database
 
 ## Cleanup
 

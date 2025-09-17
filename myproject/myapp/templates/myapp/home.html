@@ -5,6 +5,9 @@
 </head>
 <body>
     <h1>Number Addition with Celery</h1>
+    <p><strong>Web Server ID:</strong> {{ server_id }}</p>
+    <p><em>Each web server has its own database. Tasks will be processed by Celery and update the corresponding database.</em></p>
+
     <form method="post">
         {% csrf_token %}
         <div>

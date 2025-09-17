@@ -236,9 +236,10 @@ resource "aws_db_subnet_group" "database" {
   }
 }
 
-# RDS PostgreSQL Database
+# RDS PostgreSQL Databases (one per web server)
 resource "aws_db_instance" "postgres" {
-  identifier             = "django-postgres"
+  count                  = 2
+  identifier             = "django-postgres-${count.index + 1}"
   engine                = "postgres"
   engine_version        = "15.7"
   instance_class        = "db.t3.micro"
@@ -260,7 +261,7 @@ resource "aws_db_instance" "postgres" {
   maintenance_window     = "sun:04:00-sun:05:00"
 
   tags = {
-    Name = "django-postgres"
+    Name = "django-postgres-${count.index + 1}"
   }
 }
 
@@ -275,9 +276,10 @@ resource "aws_instance" "web_server" {
 
   user_data = templatefile("${path.module}/user_data.sh", {
     server_role  = "web"
+    server_id    = count.index + 1
     git_repo_url = var.git_repo_url
     redis_url    = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:${aws_elasticache_cluster.redis.cache_nodes[0].port}/0"
-    database_url = "postgresql://${aws_db_instance.postgres.username}:${aws_db_instance.postgres.password}@${aws_db_instance.postgres.endpoint}/${aws_db_instance.postgres.db_name}"
+    database_url = "postgresql://${aws_db_instance.postgres[count.index].username}:${aws_db_instance.postgres[count.index].password}@${aws_db_instance.postgres[count.index].endpoint}/${aws_db_instance.postgres[count.index].db_name}"
   })
 
   tags = {
@@ -296,10 +298,12 @@ resource "aws_instance" "processing_server" {
   subnet_id              = aws_subnet.public.id
 
   user_data = templatefile("${path.module}/user_data.sh", {
-    server_role  = "celery"
-    git_repo_url = var.git_repo_url
-    redis_url    = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:${aws_elasticache_cluster.redis.cache_nodes[0].port}/0"
-    database_url = "postgresql://${aws_db_instance.postgres.username}:${aws_db_instance.postgres.password}@${aws_db_instance.postgres.endpoint}/${aws_db_instance.postgres.db_name}"
+    server_role   = "celery"
+    server_id     = "celery"
+    git_repo_url  = var.git_repo_url
+    redis_url     = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:${aws_elasticache_cluster.redis.cache_nodes[0].port}/0"
+    database_url  = "postgresql://${aws_db_instance.postgres[0].username}:${aws_db_instance.postgres[0].password}@${aws_db_instance.postgres[0].endpoint}/${aws_db_instance.postgres[0].db_name}"
+    database_urls = join(",", [for i in range(2) : "postgresql://${aws_db_instance.postgres[i].username}:${aws_db_instance.postgres[i].password}@${aws_db_instance.postgres[i].endpoint}/${aws_db_instance.postgres[i].db_name}"])
   })
 
   tags = {
@@ -325,7 +329,7 @@ output "redis_endpoint" {
   value       = aws_elasticache_cluster.redis.cache_nodes[0].address
 }
 
-output "database_endpoint" {
-  description = "RDS PostgreSQL database endpoint"
-  value       = aws_db_instance.postgres.endpoint
+output "database_endpoints" {
+  description = "RDS PostgreSQL database endpoints"
+  value       = aws_db_instance.postgres[*].endpoint
 }

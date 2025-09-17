@@ -85,6 +85,29 @@ DATABASES = {
     }
 }
 
+# Configure multiple databases for Celery workers
+if 'DB_URLS' in os.environ:
+    # Parse multiple database URLs for Celery worker
+    db_urls = os.environ.get('DB_URLS', '').split(',')
+    for i, db_url in enumerate(db_urls, 1):
+        if db_url.strip():
+            # Parse postgresql://user:pass@host:port/dbname
+            import re
+            match = re.match(r'postgresql://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)', db_url.strip())
+            if match:
+                user, password, host, port, dbname = match.groups()
+                DATABASES[f'server_{i}'] = {
+                    'ENGINE': 'django.db.backends.postgresql',
+                    'NAME': dbname,
+                    'USER': user,
+                    'PASSWORD': password,
+                    'HOST': host,
+                    'PORT': port,
+                }
+
+# Database routing
+DATABASE_ROUTERS = ['myapp.db_router.MultiServerDatabaseRouter']
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
