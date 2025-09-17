@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Number Addition Task</title>
+</head>
+<body>
+    <h1>Number Addition with Celery</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div>
+            <label for="x">First Number:</label>
+            <input type="number" id="x" name="x" required>
+        </div>
+        <div>
+            <label for="y">Second Number:</label>
+            <input type="number" id="y" name="y" required>
+        </div>
+        <div>
+            <button type="submit">Add Numbers</button>
+        </div>
+    </form>
+</body>
+</html>
