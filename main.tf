@@ -206,6 +206,64 @@ resource "aws_elasticache_cluster" "redis" {
   }
 }
 
+# Security Group for RDS Database
+resource "aws_security_group" "database" {
+  name        = "django-database-sg"
+  description = "Security group for PostgreSQL database"
+  vpc_id      = aws_vpc.main.id
+
+  # PostgreSQL access from web servers and processing server
+  ingress {
+    description     = "PostgreSQL from application servers"
+    from_port       = 5432
+    to_port         = 5432
+    protocol        = "tcp"
+    security_groups = [aws_security_group.web_server.id, aws_security_group.processing_server.id]
+  }
+
+  tags = {
+    Name = "django-database-sg"
+  }
+}
+
+# DB Subnet Group
+resource "aws_db_subnet_group" "database" {
+  name       = "django-db-subnet-group"
+  subnet_ids = [aws_subnet.public.id, aws_subnet.private.id]
+
+  tags = {
+    Name = "django-db-subnet-group"
+  }
+}
+
+# RDS PostgreSQL Database
+resource "aws_db_instance" "postgres" {
+  identifier             = "django-postgres"
+  engine                = "postgres"
+  engine_version        = "15.7"
+  instance_class        = "db.t3.micro"
+  allocated_storage     = 20
+  storage_type          = "gp2"
+
+  db_name  = "djangodb"
+  username = "django_user"
+  password = "django_password_123"  # In production, use AWS Secrets Manager
+
+  vpc_security_group_ids = [aws_security_group.database.id]
+  db_subnet_group_name   = aws_db_subnet_group.database.name
+
+  skip_final_snapshot = true
+  deletion_protection = false
+
+  backup_retention_period = 7
+  backup_window          = "03:00-04:00"
+  maintenance_window     = "sun:04:00-sun:05:00"
+
+  tags = {
+    Name = "django-postgres"
+  }
+}
+
 # Web Servers (2 instances)
 resource "aws_instance" "web_server" {
   count                  = 2
@@ -216,9 +274,10 @@ resource "aws_instance" "web_server" {
   subnet_id              = aws_subnet.public.id
 
   user_data = templatefile("${path.module}/user_data.sh", {
-    server_role = "web"
+    server_role  = "web"
     git_repo_url = var.git_repo_url
-    redis_url   = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:${aws_elasticache_cluster.redis.cache_nodes[0].port}/0"
+    redis_url    = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:${aws_elasticache_cluster.redis.cache_nodes[0].port}/0"
+    database_url = "postgresql://${aws_db_instance.postgres.username}:${aws_db_instance.postgres.password}@${aws_db_instance.postgres.endpoint}/${aws_db_instance.postgres.db_name}"
   })
 
   tags = {
@@ -237,9 +296,10 @@ resource "aws_instance" "processing_server" {
   subnet_id              = aws_subnet.public.id
 
   user_data = templatefile("${path.module}/user_data.sh", {
-    server_role = "celery"
+    server_role  = "celery"
     git_repo_url = var.git_repo_url
-    redis_url   = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:${aws_elasticache_cluster.redis.cache_nodes[0].port}/0"
+    redis_url    = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:${aws_elasticache_cluster.redis.cache_nodes[0].port}/0"
+    database_url = "postgresql://${aws_db_instance.postgres.username}:${aws_db_instance.postgres.password}@${aws_db_instance.postgres.endpoint}/${aws_db_instance.postgres.db_name}"
   })
 
   tags = {
@@ -263,4 +323,9 @@ output "processing_server_ip" {
 output "redis_endpoint" {
   description = "Redis cluster endpoint"
   value       = aws_elasticache_cluster.redis.cache_nodes[0].address
+}
+
+output "database_endpoint" {
+  description = "RDS PostgreSQL database endpoint"
+  value       = aws_db_instance.postgres.endpoint
 }

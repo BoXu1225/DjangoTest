@@ -6,6 +6,7 @@ This project deploys a scalable Django application with Celery task processing o
 
 - **2 Web Servers**: Running Django with Gunicorn, serving HTTP requests
 - **1 Processing Server**: Running Celery workers for background task processing
+- **PostgreSQL Database**: Managed RDS database shared by all servers
 - **Redis Cluster**: Managed ElastiCache for message brokering
 - **Secure Network**: VPC with proper security groups
 
@@ -27,6 +28,7 @@ This project deploys a scalable Django application with Celery task processing o
 The Django app provides:
 - Web form for entering two numbers
 - Celery task that adds the numbers (with 10-second delay to simulate processing)
+- PostgreSQL database for storing Django data (shared by all servers)
 - Redis as message broker between web servers and processing server
 
 ## Deployment Instructions
@@ -92,6 +94,7 @@ The Django app provides:
 
 - **Web servers**: Accept HTTP (port 80) from anywhere, SSH from your IP only
 - **Processing server**: SSH access from your IP only
+- **PostgreSQL Database**: Only accessible from web and processing servers (no public access)
 - **Redis**: Only accessible from web and processing servers (no public access)
 - **VPC**: Isolated network environment
 
@@ -112,5 +115,6 @@ terraform destroy
 ## Cost Optimization
 
 - Uses `t2.micro` instances (free tier eligible)
+- Uses `db.t3.micro` for PostgreSQL (minimal cost)
 - Uses `cache.t2.micro` for Redis (minimal cost)
 - All resources are in a single availability zone to minimize data transfer costs

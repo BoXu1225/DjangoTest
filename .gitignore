@@ -1,1 +1,21 @@
 venv/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.db
+*.sqlite3
+
+# Django
+myproject/db.sqlite3
+myproject/myproject/__pycache__/
+myproject/myapp/__pycache__/
