@@ -1,0 +1,14 @@
+# AWS Configuration
+aws_region = "us-west-2"
+
+# EC2 Key Pair for SSH access
+# You must create this key pair in the AWS Console before running terraform
+key_pair_name = "your-key-pair-name"
+
+# Your IP address for SSH access (optional)
+# If null, SSH will be open to all IP addresses (0.0.0.0/0)
+# Example: "123.456.789.0" (without /32, it will be added automatically)
+my_ip = null
+
+# Git repository URL (already set to the correct repository)
+git_repo_url = "https://github.com/BoXu1225/DjangoTest.git"
