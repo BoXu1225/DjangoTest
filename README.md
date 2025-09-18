@@ -28,9 +28,12 @@ This project deploys a scalable Django application with Celery task processing o
 The Django app provides:
 - Web form for entering two numbers (shows which server you're connected to)
 - Celery task that adds the numbers with server identification (10-second delay to simulate processing)
+- **Calculation model** that records all parameters, results, and metadata in the database
 - Multiple PostgreSQL databases (each web server has its own database)
 - Redis as message broker that includes server ID to route tasks to correct database
 - Database routing logic to ensure Celery workers update the correct server's database
+- **Real-time calculation history** displayed on each server's web interface
+- Django admin interface for viewing all calculation records
 
 ## Deployment Instructions
 
@@ -105,6 +108,18 @@ The Django app provides:
 - **Web Server 2**: Uses `django-postgres-2` database, sends tasks with `server_id=2`
 - **Celery Worker**: Receives tasks with server ID and routes to correct database
 - **Message Flow**: Web Server → Redis (with server_id) → Celery → Correct Database
+- **Data Storage**: Each calculation (x, y, result, server_id, task_id, timestamps) saved to respective database
+
+## Database Model
+
+The `Calculation` model records:
+- **Input parameters**: x, y (the numbers to add)
+- **Result**: The calculated sum
+- **Server metadata**: server_id, task_id
+- **Timestamps**: created_at, processed_at
+- **Processing duration**: Automatically calculated
+
+Each server maintains its own calculation history, demonstrating complete data isolation.
 
 ## Cleanup
 

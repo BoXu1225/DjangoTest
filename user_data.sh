@@ -45,6 +45,13 @@ pip3 install -r requirements.txt
 export $(cat .env | xargs)
 python3 manage.py migrate
 
+# For Celery worker, also migrate all server databases
+if [ "${server_role}" = "celery" ]; then
+    echo "Running migrations on all server databases..."
+    python3 manage.py migrate --database=server_1 || echo "server_1 database not available yet"
+    python3 manage.py migrate --database=server_2 || echo "server_2 database not available yet"
+fi
+
 # Role-based logic
 if [ "${server_role}" = "web" ]; then
     # Start the web application using gunicorn

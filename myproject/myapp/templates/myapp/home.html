@@ -2,25 +2,82 @@
 <html>
 <head>
     <title>Number Addition Task</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .server-info { background-color: #f0f8ff; padding: 10px; border-radius: 5px; margin-bottom: 20px; }
+        .form-section { background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .history-section { background-color: #fff; border: 1px solid #ddd; border-radius: 5px; padding: 15px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .no-data { color: #666; font-style: italic; }
+        input { padding: 5px; margin: 5px; }
+        button { padding: 8px 16px; background-color: #007cba; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background-color: #005a87; }
+    </style>
 </head>
 <body>
     <h1>Number Addition with Celery</h1>
-    <p><strong>Web Server ID:</strong> {{ server_id }}</p>
-    <p><em>Each web server has its own database. Tasks will be processed by Celery and update the corresponding database.</em></p>
 
-    <form method="post">
-        {% csrf_token %}
-        <div>
-            <label for="x">First Number:</label>
-            <input type="number" id="x" name="x" required>
-        </div>
-        <div>
-            <label for="y">Second Number:</label>
-            <input type="number" id="y" name="y" required>
-        </div>
-        <div>
-            <button type="submit">Add Numbers</button>
-        </div>
-    </form>
+    <div class="server-info">
+        <p><strong>Web Server ID:</strong> {{ server_id }}</p>
+        <p><em>Each web server has its own database. Tasks will be processed by Celery and update the corresponding database.</em></p>
+    </div>
+
+    <div class="form-section">
+        <h2>Add Two Numbers</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div>
+                <label for="x">First Number:</label>
+                <input type="number" id="x" name="x" required>
+            </div>
+            <div>
+                <label for="y">Second Number:</label>
+                <input type="number" id="y" name="y" required>
+            </div>
+            <div>
+                <button type="submit">Add Numbers</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="history-section">
+        <h2>Recent Calculations (Server {{ server_id }})</h2>
+        {% if recent_calculations %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>X</th>
+                        <th>Y</th>
+                        <th>Result</th>
+                        <th>Task ID</th>
+                        <th>Processed At</th>
+                        <th>Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for calc in recent_calculations %}
+                    <tr>
+                        <td>{{ calc.x }}</td>
+                        <td>{{ calc.y }}</td>
+                        <td><strong>{{ calc.result }}</strong></td>
+                        <td><small>{{ calc.task_id|default:"N/A" }}</small></td>
+                        <td>{{ calc.processed_at|date:"M d, Y H:i:s" }}</td>
+                        <td>
+                            {% if calc.processing_duration %}
+                                {{ calc.processing_duration.total_seconds|floatformat:2 }}s
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="no-data">No calculations recorded yet for this server. Submit a calculation above to see results here.</p>
+        {% endif %}
+    </div>
 </body>
 </html>
