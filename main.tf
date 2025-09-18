@@ -221,6 +221,15 @@ resource "aws_security_group" "database" {
     security_groups = [aws_security_group.web_server.id, aws_security_group.processing_server.id]
   }
 
+  # PostgreSQL access from internet (for development/debugging)
+  ingress {
+    description = "PostgreSQL from internet"
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
+    cidr_blocks = var.my_ip != null ? ["${var.my_ip}/32"] : ["0.0.0.0/0"]
+  }
+
   tags = {
     Name = "django-database-sg"
   }
