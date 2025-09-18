@@ -6,10 +6,14 @@ apt-get update -y
 # Install git, python3-pip, and postgresql-client
 apt-get install -y git python3-pip python3-venv postgresql-client-12 python3-dev build-essential
 
-# Clone the Django application
+# Clone the Django application (force fresh clone)
 cd /home/ubuntu
-git clone ${git_repo_url} django-app
-cd django-app/myproject
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+git clone ${git_repo_url} django-app-$TIMESTAMP
+cd django-app-$TIMESTAMP/myproject
+
+# Also create a symlink for convenience
+ln -sf /home/ubuntu/django-app-$TIMESTAMP /home/ubuntu/django-app-current
 
 # Parse database URL and create environment variables
 DB_URL="${database_url}"
