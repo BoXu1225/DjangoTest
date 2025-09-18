@@ -4,7 +4,7 @@
 apt-get update -y
 
 # Install git, python3-pip, and postgresql-client
-apt-get install -y git python3-pip python3-venv postgresql-client-12
+apt-get install -y git python3-pip python3-venv postgresql-client-12 python3-dev build-essential
 
 # Clone the Django application
 cd /home/ubuntu
@@ -38,10 +38,17 @@ fi
 python3 -m venv venv
 source venv/bin/activate
 
-# Install Python dependencies
+# Upgrade pip and install Python dependencies
+pip3 install --upgrade pip setuptools wheel
+echo "Installing Python dependencies..."
 pip3 install -r requirements.txt
 
+# Verify Django installation
+echo "Verifying Django installation..."
+python3 -c "import django; print('Django version:', django.get_version())" || echo "Django import failed"
+
 # Load environment variables and run Django database migrations
+echo "Loading environment variables and running migrations..."
 export $(cat .env | xargs)
 python3 manage.py migrate
 
