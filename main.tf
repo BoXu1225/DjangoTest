@@ -275,11 +275,12 @@ resource "aws_instance" "web_server" {
   subnet_id              = aws_subnet.public.id
 
   user_data = templatefile("${path.module}/user_data.sh", {
-    server_role  = "web"
-    server_id    = count.index + 1
-    git_repo_url = var.git_repo_url
-    redis_url    = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:${aws_elasticache_cluster.redis.cache_nodes[0].port}/0"
-    database_url = "postgresql://${aws_db_instance.postgres[count.index].username}:${aws_db_instance.postgres[count.index].password}@${aws_db_instance.postgres[count.index].endpoint}/${aws_db_instance.postgres[count.index].db_name}"
+    server_role   = "web"
+    server_id     = count.index + 1
+    git_repo_url  = var.git_repo_url
+    redis_url     = "redis://${aws_elasticache_cluster.redis.cache_nodes[0].address}:${aws_elasticache_cluster.redis.cache_nodes[0].port}/0"
+    database_url  = "postgresql://${aws_db_instance.postgres[count.index].username}:${aws_db_instance.postgres[count.index].password}@${aws_db_instance.postgres[count.index].endpoint}/${aws_db_instance.postgres[count.index].db_name}"
+    database_urls = ""
   })
 
   tags = {
