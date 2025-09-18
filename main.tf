@@ -230,6 +230,15 @@ resource "aws_security_group" "database" {
     cidr_blocks = var.my_ip != null ? ["${var.my_ip}/32"] : ["0.0.0.0/0"]
   }
 
+  # Outbound rules (required for RDS to respond to connections)
+  egress {
+    description = "All outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   tags = {
     Name = "django-database-sg"
   }
